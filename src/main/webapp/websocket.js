@@ -1,26 +1,52 @@
-var ws;
+const messageWindow = document.getElementById("messages");
+const sendButton = document.getElementById("send");
 
-function connect() {
-    var username = document.getElementById("username").value;
+const messageInput = document.getElementById("message");
+const fileInput = document.getElementById("file");
 
-    var host = document.location.host;
-    var pathname = document.location.pathname;
+const sendImageButton = document.getElementById("sendImage");
 
-    ws = new WebSocket("ws://" +host  + pathname + "chat/" + username);
+const host = document.location.host;
+const pathname = document.location.pathname;
 
-    ws.onmessage = function(event) {
-        var log = document.getElementById("log");
-        console.log(event.data);
-        var message = JSON.parse(event.data);
-        log.innerHTML += message.from + " : " + message.content + "\n";
-    };
+const socket = new WebSocket("ws://" + host + pathname + "chat");
+
+socket.binaryType = "arraybuffer";
+
+socket.onopen = function (event) {
+    addMessageToWindow("Connected");
+};
+
+socket.onmessage = function (event) {
+    if (event.data instanceof ArrayBuffer) {
+        addImageToWindow(event.data);
+    } else {
+        const message = JSON.parse(event.data);
+        addMessageToWindow(message.content + "\n");
+    }
+};
+
+sendButton.onclick = function (event) {
+    sendMessage(messageInput.value);
+    messageInput.value = "";
+};
+
+sendImageButton.onclick = function (event) {
+    let file = fileInput.files[0];
+    sendMessage(file);
+    fileInput.value = null;
+};
+
+function sendMessage(message) {
+    socket.send(message);
+    addMessageToWindow(message);
 }
 
-function send() {
-    var content = document.getElementById("msg").value;
-    var json = JSON.stringify({
-        "content":content
-    });
+function addMessageToWindow(message) {
+    messageWindow.innerHTML += `<div>${message}</div>`
+}
 
-    ws.send(json);
+function addImageToWindow(image) {
+    let url = URL.createObjectURL(new Blob([image]));
+    messageWindow.innerHTML += `<img src="${url}"/>`
 }

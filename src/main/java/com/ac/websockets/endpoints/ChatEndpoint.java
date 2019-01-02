@@ -5,65 +5,58 @@ import com.ac.websockets.Coder.MessageEncoder;
 import com.ac.websockets.models.Message;
 
 import javax.websocket.*;
-import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 @ServerEndpoint(
-        value = "/chat/{username}",
+        value = "/chat",
         decoders = MessageDecoder.class,
         encoders = MessageEncoder.class
 )
 
 public class ChatEndpoint {
-    private Session session;
-    private static Set<ChatEndpoint> chatEndpoints = new CopyOnWriteArraySet<>();
+    private static final Set<Session> sessions = Collections.synchronizedSet(new HashSet<>());
     private static HashMap<String, String> users = new HashMap<>();
 
     @OnOpen
-    public void onOpen(Session session, @PathParam("username") String username) {
-        this.session = session;
-        chatEndpoints.add(this);
-        users.put(session.getId(), username);
-
-        Message message = new Message();
-        message.setFrom(username);
-        message.setContent("Connected!");
-        broadcast(message);
+    public void onOpen(Session session) {
+        System.out.println(session.getId() + " is opened");
+        sessions.add(session);
     }
 
     @OnMessage
-    public void onMessage(Session session, Message message) {
-        message.setFrom(users.get(session.getId()));
+    public void handleTextMessage(Session session, Message message) {
+        System.out.println("Message from " + session.getId() + ": " + message);
         broadcast(message);
+    }
+
+    @OnMessage(maxMessageSize = 2048000)
+    public byte[] handleBinaryMessage(byte[] buffer) {
+        return buffer;
     }
 
     @OnClose
     public void onClose(Session session) {
-        chatEndpoints.remove(this);
-        Message message = new Message();
-        message.setFrom(users.get(session.getId()));
-        message.setContent("Disconnected!");
-        broadcast(message);
+        System.out.println(session.getId() + " is closed");
+        sessions.remove(session);
     }
 
     @OnError
     public void onError(Session session, Throwable throwable) {
-
+        throwable.printStackTrace();
     }
 
     private static void broadcast(Message message) {
-        chatEndpoints.forEach(endpoint -> {
-            synchronized (endpoint) {
-                try {
-                    endpoint.session.getBasicRemote().sendObject(message);
-                } catch (IOException | EncodeException e) {
-                    e.printStackTrace();
-                }
+        for (Session session : sessions) {
+            try {
+                session.getBasicRemote().sendObject(message);
+            } catch (IOException | EncodeException ex) {
+                ex.printStackTrace();
             }
-        });
+        }
     }
 }
