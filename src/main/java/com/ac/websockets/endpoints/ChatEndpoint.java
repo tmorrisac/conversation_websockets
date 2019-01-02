@@ -13,14 +13,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 @ServerEndpoint(
-        value = "/chat",
-        decoders = MessageDecoder.class,
-        encoders = MessageEncoder.class
+        value = "/chat"
 )
 
 public class ChatEndpoint {
     private static final Set<Session> sessions = Collections.synchronizedSet(new HashSet<>());
-    private static HashMap<String, String> users = new HashMap<>();
 
     @OnOpen
     public void onOpen(Session session) {
@@ -29,7 +26,7 @@ public class ChatEndpoint {
     }
 
     @OnMessage
-    public void handleTextMessage(Session session, Message message) {
+    public void handleTextMessage(Session session, String message) {
         System.out.println("Message from " + session.getId() + ": " + message);
         broadcast(message);
     }
@@ -50,11 +47,11 @@ public class ChatEndpoint {
         throwable.printStackTrace();
     }
 
-    private static void broadcast(Message message) {
+    private static void broadcast(String message) {
         for (Session session : sessions) {
             try {
-                session.getBasicRemote().sendObject(message);
-            } catch (IOException | EncodeException ex) {
+                session.getBasicRemote().sendText(message);
+            } catch (IOException ex) {
                 ex.printStackTrace();
             }
         }

@@ -21,8 +21,7 @@ socket.onmessage = function (event) {
     if (event.data instanceof ArrayBuffer) {
         addImageToWindow(event.data);
     } else {
-        const message = JSON.parse(event.data);
-        addMessageToWindow(message.content + "\n");
+        addMessageToWindow(event.data + "\n");
     }
 };
 
