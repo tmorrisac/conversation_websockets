@@ -38,7 +38,6 @@ sendImageButton.onclick = function (event) {
 
 function sendMessage(message) {
     socket.send(message);
-    addMessageToWindow(message);
 }
 
 function addMessageToWindow(message) {

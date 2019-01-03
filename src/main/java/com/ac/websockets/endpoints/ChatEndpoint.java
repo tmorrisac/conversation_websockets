@@ -1,14 +1,9 @@
 package com.ac.websockets.endpoints;
 
-import com.ac.websockets.Coder.MessageDecoder;
-import com.ac.websockets.Coder.MessageEncoder;
-import com.ac.websockets.models.Message;
-
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
