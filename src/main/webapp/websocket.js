@@ -6,10 +6,11 @@ const fileInput = document.getElementById("file");
 
 const sendImageButton = document.getElementById("sendImage");
 
-const host = document.location.host;
-const pathname = document.location.pathname;
+const baseUri = window.location.href;
+let wsUri = baseUri.concat("chat/");
+wsUri = wsUri.replace("http", "ws");
 
-const socket = new WebSocket("ws://" + host + pathname + "chat");
+const socket = new WebSocket(wsUri);
 
 socket.binaryType = "arraybuffer";
 
